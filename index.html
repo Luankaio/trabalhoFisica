@@ -65,19 +65,24 @@
     <input type="number" id="v" value="1"><br>
     <label for="theta">θ (Ângulo em graus):</label>
     <input type="number" id="theta" value="45"><br>
-    <button onclick="atualizarVetores()">Atualizar Vetores</button><br><br>
+    <button onclick="atualizarVetores()">Atualizar Vetores</button>
+    <button onclick="reiniciarContagem()">Reiniciar Contagem</button><br><br>
+    
     <label for="camPosX">Câmera X:</label>
     <input type="number" id="camPosX" value="5"><br>
     <button onclick="mudarPosicaoCamera('x', 1)">Mover Câmera X +</button>
     <button onclick="mudarPosicaoCamera('x', -1)">Mover Câmera X -</button><br>
+    
     <label for="camPosY">Câmera Y:</label>
     <input type="number" id="camPosY" value="5"><br>
     <button onclick="mudarPosicaoCamera('y', 1)">Mover Câmera Y +</button>
     <button onclick="mudarPosicaoCamera('y', -1)">Mover Câmera Y -</button><br>
+    
     <label for="camPosZ">Câmera Z:</label>
     <input type="number" id="camPosZ" value="10"><br>
     <button onclick="mudarPosicaoCamera('z', 1)">Mover Câmera Z +</button>
     <button onclick="mudarPosicaoCamera('z', -1)">Mover Câmera Z -</button>
+    
     <p>Força Magnética: <span id="valorForca">0</span></p>
   </div>
 
@@ -121,7 +126,8 @@
     scene.add(plane);
 
     // Vetor B (campo magnético)
-    let Bdir = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 4, 0xff0000, 0.3, 0.2);    scene.add(Bdir);
+    let Bdir = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 4, 0xff0000, 0.3, 0.2);
+    scene.add(Bdir);
 
     // Vetor V (velocidade)
     let Vdir = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 4, 0x0000ff, 0.3, 0.2);
@@ -172,10 +178,9 @@
       const v = parseFloat(document.getElementById('v').value);
       const theta = parseFloat(document.getElementById('theta').value) * (Math.PI / 180); // Converter para radianos
 
-      // Vetores ajustados
       const BVector = new THREE.Vector3(0, B, 0); // Campo magnético (B)
-      const VVector = new THREE.Vector3(v * Math.sin(theta), v * Math.cos(theta), 0);
-      
+      const VVector = new THREE.Vector3(v * Math.sin(theta), v * Math.cos(theta), 0); // Velocidade (V)
+
       // Calcular força magnética: F = q * (V x B)
       const FmVector = VVector.clone().cross(BVector).multiplyScalar(q);
 
@@ -227,6 +232,19 @@
       }
 
       fmChart.update();
+    }
+
+    // Função para reiniciar a contagem do tempo e limpar o gráfico
+    function reiniciarContagem() {
+      time = 0; // Reinicia o tempo
+
+      // Limpa os dados do gráfico
+      fmChart.data.labels = [];
+      fmChart.data.datasets[0].data = [];
+      fmChart.update();
+
+      // Atualiza o valor da força magnética na interface
+      document.getElementById('valorForca').textContent = "0";
     }
 
     // Função para mudar a posição da câmera
