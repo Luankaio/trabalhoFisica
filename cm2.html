@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulação de Força Magnética</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label for="B">B (Campo Magnético):</label>
+    <input type="number" id="B" value="1"><br>
+    <label for="q">q (Carga):</label>
+    <input type="number" id="q" value="1"><br>
+    <label for="v">v (Velocidade):</label>
+    <input type="number" id="v" value="1"><br>
+    <label for="theta">θ (Ângulo em graus):</label>
+    <input type="number" id="theta" value="45"><br>
+    <button onclick="atualizarVetores()">Atualizar Vetores</button><br><br>
+    <label for="camPosX">Câmera X:</label>
+    <input type="number" id="camPosX" value="5"><br>
+    <button onclick="mudarPosicaoCamera('x', 1)">Mover Câmera X +</button>
+    <button onclick="mudarPosicaoCamera('x', -1)">Mover Câmera X -</button><br>
+    <label for="camPosY">Câmera Y:</label>
+    <input type="number" id="camPosY" value="5"><br>
+    <button onclick="mudarPosicaoCamera('y', 1)">Mover Câmera Y +</button>
+    <button onclick="mudarPosicaoCamera('y', -1)">Mover Câmera Y -</button><br>
+    <label for="camPosZ">Câmera Z:</label>
+    <input type="number" id="camPosZ" value="10"><br>
+    <button onclick="mudarPosicaoCamera('z', 1)">Mover Câmera Z +</button>
+    <button onclick="mudarPosicaoCamera('z', -1)">Mover Câmera Z -</button>
+  </div>
+  <script>
+    // Configuração inicial
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Adicionar luz
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 5, 5);
+    scene.add(light);
+
+    // Criar o plano representando o campo magnético (B)
+    const planeGeometry = new THREE.PlaneGeometry(10, 10);
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotation.x = Math.PI / 2;
+    scene.add(plane);
+
+    // Vetor B (campo magnético)
+    let Bdir = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 4, 0xff0000, 0.3, 0.2);
+    scene.add(Bdir);
+
+    // Vetor V (velocidade)
+    let Vdir = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 4, 0x0000ff, 0.3, 0.2);
+    scene.add(Vdir);
+
+    // Vetor Fm (força magnética)
+    let Fmdir = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 1).normalize(), new THREE.Vector3(0, 0, 0), 4, 0x00ff00, 0.3, 0.2);
+    scene.add(Fmdir);
+
+    // Esfera representando a carga
+    const sphereGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.position.set(0, 0, 0);
+    scene.add(sphere);
+
+    // Ajustar câmera
+    camera.position.set(5, 5, 10);
+    camera.lookAt(0, 0, 0);
+
+    // Função para atualizar os vetores
+    function atualizarVetores() {
+        const B = parseFloat(document.getElementById('B').value);
+        const q = parseFloat(document.getElementById('q').value);
+        const v = parseFloat(document.getElementById('v').value);
+        const theta = parseFloat(document.getElementById('theta').value) * (Math.PI / 180); // Converter para radianos
+
+        const BVector = new THREE.Vector3(0, B, 0); // Campo magnético (B)
+        const VVector = new THREE.Vector3(v * Math.cos(theta), v * Math.sin(theta), 0); // Velocidade (V)
+
+        // Calcular força magnética: F = q * (V x B)
+        const FmVector = VVector.clone().cross(BVector).multiplyScalar(q);
+
+        // Escala para visualização
+        const escala = 4;
+
+        // Atualizar direções e comprimentos dos vetores
+        Bdir.setDirection(BVector.clone().normalize());
+        Bdir.setLength(BVector.length() * escala);
+
+        Vdir.setDirection(VVector.clone().normalize());
+        Vdir.setLength(VVector.length() * escala);
+
+        Fmdir.setDirection(FmVector.clone().normalize());
+        Fmdir.setLength(FmVector.length() * escala);
+
+        // Atualizar posições dos vetores
+        Bdir.position.set(0, 0, 0);
+        Vdir.position.set(0, 0, 0);
+        Fmdir.position.set(0, 0, 0);
+    }
+
+    // Função para mudar a posição da câmera
+    function mudarPosicaoCamera(axis, value) {
+      camera.position[axis] += value;
+      document.getElementById(`camPos${axis.toUpperCase()}`).value = camera.position[axis];
+      camera.lookAt(0, 0, 0); // Manter a câmera olhando para o centro da cena
+    }
+
+    // Atualização contínua
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
